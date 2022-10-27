@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<!-- Made by Joel F. Jan.P & Pol.R-->
+<head>
+  <script type="text/javascript" src="processing.js"></script>
+  <title>Tic-Tac-Toe</title>
+  <link rel="icon" href="x.png"></link>
+</head>
+<body>
+  <script type="text/processing">
+  PImage x;
+  byte map[][] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+  byte tries = 0, currentPlayer = 1, opponent;
+  boolean turnPlayerOne = false;
+  byte gameState = 1; // 0 = menu, 1 = game started, 2 = game ended
+  byte playerOneWins = 0, playerTwoWins = 0;
+
+  void setup() {
+    size(1280, 720);
+    background(30);
+    drawBoard();
+    printCurrentPlayer();
+    printCurrentWins();
+    stroke(255);
+    strokeWeight(8);
+    x = loadImage("x.png");
+    x.resize(170, 170);
+  }
+
+  void draw() {
+    // System.out.print(mouseX+" "+mouseY);
+  }
+  //Defineix quin jugador esta jugant actualment
+  void currentPlayerMethod() {
+    if (!turnPlayerOne) {
+      currentPlayer = 2;
+      opponent = 1;
+      turnPlayerOne = true;
+    } else {
+      currentPlayer = 1;
+      opponent = 2;
+      turnPlayerOne = false;
+    }
+  }
+
+  //Guarda els valors del taulell en una array
+  public boolean checkPosition (byte row, byte column) {
+    if (map[row][column] == 0) {
+      map[row][column] = currentPlayer;
+      return true;
+    }
+    return false;
+  }
+  //S'executa al fer clic
+  void mouseClicked() {
+    printCurrentPlayer();
+    if (gameState == 1) checkTable();
+  }
+
+  void keyPressed(){
+    switch (key){
+      case 'r':
+      restartGame();
+      break;
+    }
+
+  }
+
+  void restartGame() {
+    drawBoard();
+    for (int i = 0; i < map.length; i++) {
+      for (int j = 0; j < map.length; j++) {
+        map[i][j] = 0;
+      }
+    }
+    gameState = 1;
+    printCurrentWins();
+    printCurrentPlayer();
+  }
+
+  //Defineix els quadrats del taulell
+  void checkTable() {
+
+    int countI = 0, countJ = 0;
+    int cordX, cordY, cordXNext, cordYNext;
+    for (int i = 340; i < 940; i+=200) {
+      for (int j = 60; j < 660; j+=200) {
+        cordX = i;
+        cordY = j;
+        cordXNext = i+200;
+        cordYNext = j+200;
+        if (mouseX > cordX && mouseX < cordXNext && mouseY > cordY && mouseY < cordYNext) {
+          if (checkPosition((byte)countI, (byte) countJ)) {
+            playerPrint(currentPlayer, cordX, cordY, i, j);
+            if (checkWinMap(map, currentPlayer)) {
+              gameState = 2;
+              addWins();
+              printBoxCustom("\'R\' to restart");
+              endSquare();
+            } else if (checkDrawMap(map)) {
+              gameState = 2;
+              endSquare();
+            }
+            currentPlayerMethod();
+            printCurrentPlayer();
+          }
+        }
+
+        countJ++;
+      }
+      countJ = 0;
+      countI++;
+    }
+  }
+  void addWins(){
+    if (currentPlayer == 1){
+      playerOneWins++;
+    } else {
+      playerTwoWins++;
+    }
+  }
+
+  //Mira si s'ha guanyat
+  public static boolean checkWinMap(byte[][] map, byte currPlayer) {
+
+    boolean check = false;
+    byte counterRow = 0, counterColumn = 0, counterDiagonallyRight = 0, counterDiagonallyLeft = 0;
+    // Comprovem tots els casos possibles
+    for (byte i = 0; i < map.length; i++) {
+      for (byte j = 0; j < map.length; j++) {
+        if (map[i][j] == currPlayer)
+        counterRow++;
+        if (map[j][i] == currPlayer)
+        counterColumn++;
+        // La diagonal de a dalt a la esquerra cap abaix a la dreta és fa mirant si les
+        // posicions on i i j son iguals
+        // De aquesta manera es forma la diagonal
+        if (i == j && map[i][j] == currPlayer)
+        counterDiagonallyRight++;
+        // La diagonal de a dalt a la dreta cap abaix a la esquerra és fa mirant les
+        // posicions on la suma de i i j és 6,
+        // De aquesta manera es forma la diagonal
+        if ((i + j == 2) && (map[i][j] == currPlayer))
+        counterDiagonallyLeft++;
+      }
+      // Si hi ha "3" en algun dels comptadors és que s'ha fet 3 en ratlla
+      if (counterRow == 3 || counterColumn == 3 || counterDiagonallyRight == 3 || counterDiagonallyLeft == 3)
+      check = true;
+      counterRow = 0;
+      counterColumn = 0;
+    }
+
+    return check;
+  }
+  //Mira si hi ha un empat
+  public static boolean checkDrawMap(byte[][] map) {
+
+    boolean veredict = false;
+    byte counter = 0;
+    // Mirem totes les posicions, si son diferents del valor per defecte " " vol dir
+    // que ja esta ocupada
+    for (byte i = 0; i < map.length; i++) {
+      for (byte j = 0; j < map.length; j++) {
+        if (map[i][j] != 0)
+        counter++;
+      }
+    }
+    // Si s'han ocupat nou posicions el mapa esta ple
+    if (counter == 9)
+    veredict = true;
+
+    return veredict;
+  }
+
+  //Dibuixa el plantell
+  void drawBoard() {
+    fill(60);
+    stroke(1);
+    strokeWeight(1);
+    for (int i = 340; i < 940; i+=200) {
+      for (int j = 60; j < 660; j+=200) {
+        rect(i, j, 200, 200);
+      }
+    }
+  }
+  //Imprimeix el recuadre esquerra|superior i l'estat de la partida
+  void printCurrentPlayer() {
+    strokeWeight(1);
+    stroke(0);
+    fill(60);
+    rect(50, 60, 250, 50);
+    textSize(32);
+    fill(255);
+    if (checkDrawMap(map)){
+      text("Draw", 70, 95);
+    }else if (gameState == 1){
+      text("Player "+currentPlayer, 70, 95);
+    }else if (gameState == 2){
+      text("Player "+opponent+ " wins!", 70, 95);
+    }
+  }
+  //Imprimeix el recuadre esquerra|superior a sota del requadre de l'estat de la partida amb un missatge personalitzat
+  void printBoxCustom(String message) {
+    strokeWeight(1);
+    stroke(0);
+    fill(60);
+    rect(50, 120, 250, 50);
+    textSize(32);
+    fill(255);
+    text(message, 70, 155);
+  }
+  //Imprimeix el recuadre esquerra|superior a sota del requadre de l'estat de la partida amb les victories actuals
+  void printCurrentWins() {
+    strokeWeight(1);
+    stroke(0);
+    fill(60);
+    rect(50, 120, 250, 50);
+    textSize(32);
+    fill(255);
+    text("X "+playerOneWins+" - "+playerTwoWins+" O ", 70, 155);
+  }
+  //Imprimir la fitxa. Si 1 = O, si 2 = X
+  void playerPrint(byte currentPlayer, int cordX, int cordY, int i, int j) {
+    if (currentPlayer == 2) {
+      fill (random(255), random(255), random(255));
+      ellipse(cordX+100, cordY+100, 160, 160);
+    } else {
+      image(x, i+15, j+15);
+    }
+  }
+  //Imprimeix un recuadre a sobre del taulell de color verd
+  void endSquare(){
+    fill(0, 127, 0, 60);
+    rect(340, 60, 600, 600);
+  }
+  </script>
+  <canvas id="sketch" style="border: 1px solid black;"></canvas>
+</body>
+</html>
